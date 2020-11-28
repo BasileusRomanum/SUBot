@@ -1,5 +1,8 @@
 import time
 import re
+import os
+import Tkinter as tk
+import tkMessageBox
 from win10toast import ToastNotifier
 from selenium import webdriver
 from bs4 import BeautifulSoup
@@ -84,10 +87,17 @@ while True:
             fileEnd.write(line)
     time.sleep(60)
 
-driver.close()
-tost = ToastNotifier()
+driver.close
+'''
+if os.name == 'nt':
+    tost = ToastNotifier()
 #Dlaczego windowsowe tosty?
 #Bo JP2GMD
 #Generalnie to na chuj ten tost, bo docelowo skrypt ma działać prawie w nieskończoność.
 #NO ALE
-tost.show_toast("Powiadomienie", "A PO DEBUGOWANIU CHODZILIŚMY NA KREMÓWKI")
+    tost.show_toast("Powiadomienie", "A PO DEBUGOWANIU CHODZILIŚMY NA KREMÓWKI")
+else:
+    root  tk.Tk()
+    root.withdraw()
+    tkMessageBox.showwarning('Tej, padło')
+'''
