@@ -44,15 +44,17 @@ while True:
                 with open('dane.csv', 'r') as fileStart:
                     results = [x.split(";") for x in fileStart.read().splitlines()]
                 results[0].append(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-
+                viewersNumber = re.findall("i ([0-9]+[ ])\w+", driver.page_source)[0][:-1]
+                transmissionsNumber = re.findall("<h4>([0-9]+[ ])\w+", driver.page_source)[0][:-1]
+                '''
                 for i in range(len(obrobkaLoga)):
                     if "oglądających" in obrobkaLoga[i]:
                         viewers = int(obrobkaLoga[i -1])
                         results[2].append(str(viewers))
                     if "transmisji" in obrobkaLoga[i] and obrobkaLoga[i + 1] == "i":
                         numberOfTransmissions = int(obrobkaLoga[i -1])
-                        results[1].append(str(numberOfTransmissions))
-                results[3].append(str(round(viewers/numberOfTransmissions)))
+                        results[1].append(str(numberOfTransmissions))'''
+                results[3].append(str(round(int(viewersNumber)/int(transmissionsNumber))))
 
 
             #Arkusz będzie otwierany, wymazywany, zastępowany nową wersją i zamykany. Wszystko z with.
