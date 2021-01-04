@@ -1,103 +1,108 @@
 import time
 import re
 import os
-import Tkinter as tk
-import tkMessageBox
+import logging
 from win10toast import ToastNotifier
 from selenium import webdriver
 from bs4 import BeautifulSoup
 
 SITE_ADDRESS = 'https://showup.tv'
 
-driver = webdriver.Chrome()
-driver.get(SITE_ADDRESS)
-#Jakoś trzeba ominąć ostrzeżenie, że strona porno jest stroną porno.
-driver.find_element_by_link_text("Wchodzę").click()
-#Przeładowanie kodu strony, bo inaczej mamy kod tylko dla ostrzeżenia.
-driver.refresh()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
-#Wyszukiwanie ogólnej liczby widzów i transmisji (Kobiety i mężczyźni chyba razem)
-#Poprzez "in", bo z jakiegoś powodu zwykłe porównanie nie działa. Może różnice w kodowaniu stringów?
-#Kek. Nie. Splitowało inaczej jak myślałem. In zostaje. A kurwa nie zostaje, bo json leci do kosza. Jebana bulwa
-modelIsPresent = False
+
 while True:
-    driver.refresh()
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    obrobkaLoga = soup.prettify().split(" ")
-    #Tutaj do dodania jest import i obróbka .csv z wynikami. Czyli splitlines() i potem w pętelce split(";") i wsio
-    #.csv ma mieć strukturę 'Nick';ilość widzów;ilość widzów;ilość widzów(...).
-    #Poza pierwszą linijką, która jest kontrolona i jednocześnie przechowuje czas pobrania danych ze strony.
-    #Taka transpozycja ułatwi mi obróbkę tutaj, a transpozycję do klasycznego wyglądu, żeby to wyrzygać na wykres
-    #zrobi się pandą w skrypcie, które będzie generował htmla z wykresem. Docelowo modyfikowalnym w czasie rzeczywistym.
-    #Ale to już powinno być w JS, a nie pajtonku
-    #Otwieramy .csv z nazwamia modelek i liczbą widzów. Potem dodajemy czas, kiedy pobrano wsio
-    with open('dane.csv', 'r') as fileStart:
-        results = [x.split(";") for x in fileStart.read().splitlines()]
-    results[0].append(str(time.time()))
+        try:
+            driver = webdriver.Chrome()
+            driver.get(SITE_ADDRESS)
+            #Jakoś trzeba ominąć ostrzeżenie, że strona porno jest stroną porno.
+            driver.find_element_by_link_text("Wchodzę").click()
+            #time.sleep(5)
+            #driver.find_element_by_link_text("Zamknij").click()
+            #Przeładowanie kodu strony, bo inaczej mamy kod tylko dla ostrzeżenia.
+            driver.refresh()
 
-    for i in range(len(obrobkaLoga)):
-        if "oglądających" in obrobkaLoga[i]:
-            results[2].append(str(int(obrobkaLoga[i -1])))
-        if "transmisji" in obrobkaLoga[i] and obrobkaLoga[i + 1] == "i":
-            results[1].append(str(int(obrobkaLoga[i -1])))
-
-#Arkusz będzie otwierany, wymazywany, zastępowany nową wersją i zamykany. Wszystko z with.
-#Żeby ten skrypt nie świnkował i nie zajmował pliku cały czas.
-#Kwi.
-#Iterujemy przez obiekty w htmlu, które tyczą się pojedyńczych streamów
-    for i in soup.find_all("li", class_="stream"):
-        for j in str(i).splitlines():
-            if "href" in j:
-                modelName = j[(j.index("/") + 1):-2]
-            if "stream__count__number" in j:
-                modelViewersNumber = int(re.findall('[0-9]+', j)[0])
-#Użycie tutaj numpy.array spowodowałoby niepotrzebny burdel, więc iterujemy szybko przez już zawarte Modelki
-#Jeśli jest już, to dodajemy liczbę widzów do odpowiedniej babki
-#Jeśli nie ma, to dodajemy modelkę i liczbę widzów.
-        for k in range(len(results)):
-            if modelName in results[k][0]:
-                results[k].append(str(modelViewersNumber))
-                modelIsPresent = True
-                break
-
-        if modelIsPresent:
+            #Wyszukiwanie ogólnej liczby widzów i transmisji (Kobiety i mężczyźni chyba razem)
+            #Poprzez "in", bo z jakiegoś powodu zwykłe porównanie nie działa. Może różnice w kodowaniu stringów?
+            #Kek. Nie. Splitowało inaczej jak myślałem. In zostaje. A kurwa nie zostaje, bo json leci do kosza. Jebana bulwa
             modelIsPresent = False
-            pass
-        else:
-            results.append([str(modelName)])
-            for l in range(len(results[0])-2):
-                results[-1].append("0")
-            results[-1].append(str(modelViewersNumber))
-#Pamiętaj programisto młody, zawsze zeruj swe metody.
-#Wiem, że to zmienne, ale zmienne się nie rymujo.
-        modelName = ""
-        modelViewersNumber = 0
+            while True:
+                driver.get(SITE_ADDRESS)
+                driver.refresh()
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                obrobkaLoga = soup.prettify().split(" ")
+                #Tutaj do dodania jest import i obróbka .csv z wynikami. Czyli splitlines() i potem w pętelce split(";") i wsio
+                #.csv ma mieć strukturę 'Nick';ilość widzów;ilość widzów;ilość widzów(...).
+                #Poza pierwszą linijką, która jest kontrolona i jednocześnie przechowuje czas pobrania danych ze strony.
+                #Taka transpozycja ułatwi mi obróbkę tutaj, a transpozycję do klasycznego wyglądu, żeby to wyrzygać na wykres
+                #zrobi się pandą w skrypcie, które będzie generował htmla z wykresem. Docelowo modyfikowalnym w czasie rzeczywistym.
+                #Kek. Generalnie to powinienem to wrzucać od razu do bazy danych. Ale jestem leniwy. I nie wiem za bardzo jeszcze jak to zrobić.
+                #Musiałbym pogrzebać w metodach dataframe.
+                #Ale to już powinno być w JS, a nie pajtonku. HA, TAKI CHUJ. I TAK JEST W PYTHONIE
+                #Otwieramy .csv z nazwamia modelek i liczbą widzów. Potem dodajemy czas, kiedy pobrano wsio
+                with open('dane.csv', 'r') as fileStart:
+                    results = [x.split(";") for x in fileStart.read().splitlines()]
+                results[0].append(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-#Na wszelki wypadek wyrównywana jest ilość danych o każdej modelce.
-#Jeśli jej nie ma, to dodajemy zero na jej konto na końcu.
-    for subListLength in range(len(results)):
-        while len(results[0]) > len(results[subListLength]):
-            results[subListLength].append('0')
+                for i in range(len(obrobkaLoga)):
+                    if "oglądających" in obrobkaLoga[i]:
+                        viewers = int(obrobkaLoga[i -1])
+                        results[2].append(str(viewers))
+                    if "transmisji" in obrobkaLoga[i] and obrobkaLoga[i + 1] == "i":
+                        numberOfTransmissions = int(obrobkaLoga[i -1])
+                        results[1].append(str(numberOfTransmissions))
+                results[3].append(str(round(viewers/numberOfTransmissions)))
 
-    toSave = [(";".join(x) + "\n") for x in results]
-    print(time.asctime(time.localtime())," Wir warten")
 
-    with open('dane.csv', 'w') as fileEnd:
-        for line in toSave:
-            fileEnd.write(line)
-    time.sleep(60)
+            #Arkusz będzie otwierany, wymazywany, zastępowany nową wersją i zamykany. Wszystko z with.
+            #Żeby ten skrypt nie świnkował i nie zajmował pliku cały czas.
+            #Kwi.
+            #Iterujemy przez obiekty w htmlu, które tyczą się pojedyńczych streamów
+            #A gówno. Wyszukujemy wszystko regexem. Śmierć burżuazyjnej iteracji.
+            #Regexujemy listę nicków i liczbę widzów. Z racji tego, że indeksy obu odpowiadają sobie, to nie ma żadnego problemu.
+                modelNameList = re.findall('<a href="/([^"]*)', driver.page_source)[8:-5]
+                modelViewersList = re.findall('">([0-9]+)', driver.page_source)
+            #Jeśli jest już, to dodajemy liczbę widzów do odpowiedniej babki
+            #Jeśli nie ma, to dodajemy modelkę i liczbę widzów.
+                knownModelsList = [results[x][0] for x in range(len(results))]
+                for modelName in modelNameList:
+                    if modelName in knownModelsList:
+                        logger.info(f"{time.asctime(time.localtime())} {modelName} has {modelViewersList[modelNameList.index(modelName)]} viewers")
+                        results[knownModelsList.index(modelName)].append(modelViewersList[modelNameList.index(modelName)])
+                    else:
+                        logger.info(f"{time.asctime(time.localtime())} Adding {modelName} to the database")
+                        toAdd = []
+                        toAdd.append(modelName + '0'*(len(results[0]) - 2) + modelViewersList[modelNameList.index(modelName)])
+                        results.insert(-1, (toAdd))
+            #Pamiętaj programisto młody, zawsze zeruj swe metody.
+            #Wiem, że to zmienne, ale zmienne się nie rymujo.
+                    #modelName = ""
+                    #modelViewersNumber = 0
+                #Zbędne już
+            #Na wszelki wypadek wyrównywana jest ilość danych o każdej modelce.
+            #Znaczy, to nawet nie jest na wszelki wypadek. Inaczej dane są chuja warte, chyba, że wrzucałbym je jako słownik data:widzowie
+            #Ale to by jebało mi potem import do dataframe pewnie. Nie je
+            #Jeśli jej nie ma, to dodajemy zero na jej konto na końcu.
+                for subListLength in range(len(results)):
+                    while len(results[0]) > len(results[subListLength]):
+                        results[subListLength].append('0')
 
-driver.close
-'''
-if os.name == 'nt':
-    tost = ToastNotifier()
-#Dlaczego windowsowe tosty?
-#Bo JP2GMD
-#Generalnie to na chuj ten tost, bo docelowo skrypt ma działać prawie w nieskończoność.
-#NO ALE
-    tost.show_toast("Powiadomienie", "A PO DEBUGOWANIU CHODZILIŚMY NA KREMÓWKI")
-else:
-    root  tk.Tk()
-    root.withdraw()
-    tkMessageBox.showwarning('Tej, padło')
-'''
+                toSave = [(";".join(x) + "\n") for x in results]
+                localTime = str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+                logger.info(f"{localTime} Waiting for the next cycle")
+
+                with open('dane.csv', 'w') as fileEnd:
+                    for line in toSave:
+                        fileEnd.write(line)
+                time.sleep(60*10)
+
+            driver.close()
+        except KeyboardInterrupt:
+            driver.close()
+            break
+        except:
+            driver.close()
+            localTime = str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+            logger.info(f"{localTime} There was an error. Attempting to start anew")
+            continue
