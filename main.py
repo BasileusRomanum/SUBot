@@ -70,7 +70,7 @@ while True:
                 knownModelsList = [results[x][0] for x in range(len(results))]
                 for modelName in modelNameList:
                     if modelName in knownModelsList:
-                        logger.info(f"{time.asctime(time.localtime())} {modelName} has {modelViewersList[modelNameList.index(modelName)]} viewers")
+                        #logger.info(f"{time.asctime(time.localtime())} {modelName} has {modelViewersList[modelNameList.index(modelName)]} viewers")
                         results[knownModelsList.index(modelName)].append(modelViewersList[modelNameList.index(modelName)])
                     else:
                         logger.info(f"{time.asctime(time.localtime())} Adding {modelName} to the database")
@@ -78,13 +78,7 @@ while True:
                         toAdd.append(modelName)
                         [toAdd.append('0') for x in range((len(results[0]) - 2))]
                         toAdd.append(modelViewersList[modelNameList.index(modelName)])
-                        #toAdd.append(modelName + '0'*(len(results[0]) - 2) + modelViewersList[modelNameList.index(modelName)])
                         results.insert(-1, (toAdd))
-            #Pamiętaj programisto młody, zawsze zeruj swe metody.
-            #Wiem, że to zmienne, ale zmienne się nie rymujo.
-                    #modelName = ""
-                    #modelViewersNumber = 0
-                #Zbędne już
             #Na wszelki wypadek wyrównywana jest ilość danych o każdej modelce.
             #Znaczy, to nawet nie jest na wszelki wypadek. Inaczej dane są chuja warte, chyba, że wrzucałbym je jako słownik data:widzowie
             #Ale to by jebało mi potem import do dataframe pewnie. Nie je
@@ -93,6 +87,27 @@ while True:
                     while len(results[0]) > len(results[subListLength]):
                         results[subListLength].append('0')
 #Sklejanie arrayów do zrzucenia do pliku. I kasowanie ostatniego \n, bo potem .csv interpretuje to jako pustą linię i inne rzeczy się jebiom.
+
+                modelNameSet = [results[x][0] for x in range(len(results))][3:]
+                for modelNumber in range(len(modelNameSet)):
+                    if len(results[modelNumber]) != len(results[0]):
+                        #kontrola czy dany subarray ma odpowiednią długość po powyższym. Jeśli nie, to pozbywamy się najnowszego zera.
+                        #Powinno pomóc na z dupy za długiego ostatniego subarraya.
+                        print(len(results[modelNumber]), len(results[0]))
+                        if len(results[modelNumber]) == 0:
+                            results[modelNumber].pop()
+                            logging.info("Found empty subarray")
+                        elif len(results[modelNumber]) > len(results[0]):
+                            tmpModelArrayReersed = results[modelNumber]
+                            tmpModelArrayReersed.reverse()
+                            results[modelNumber].pop(tmpModelArrayReersed.index('0')-len(results[modelNumber])+1)
+                            logger.info(f"Array of {results[modelNumber][0]} has been found too long.")
+                        else:
+                            logger.info("Something unexpected happenend. Moving on.")
+                    else:
+                        pass
+
+                #Sklejamy arraya 2d do str do zapisu.
                 toSave = [(";".join(x) + "\n") for x in results][:-2]
 
                 localTime = str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
@@ -105,8 +120,16 @@ while True:
 
             driver.close()
         except KeyboardInterrupt:
+            logger.info("Continue Y/N")
+            answer = input("> ")
+            if answer == "Y":
+                pass
+            else:
+                quit()
             driver.close()
             break
+        except BaseException as error:
+            logger.info(f" {error} has been encountered. Trying to restart")
         except:
             driver.close()
             localTime = str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
