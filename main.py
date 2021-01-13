@@ -98,9 +98,9 @@ while True:
                             results[modelNumber].pop()
                             logging.info("Found empty subarray")
                         elif len(results[modelNumber]) > len(results[0]):
-                            tmpModelArrayReersed = results[modelNumber]
-                            tmpModelArrayReersed.reverse()
-                            results[modelNumber].pop(tmpModelArrayReersed.index('0')-len(results[modelNumber])+1)
+                            tmpModelArrayReversed = results[modelNumber]
+                            tmpModelArrayReversed.reverse()
+                            results[modelNumber].pop(tmpModelArrayReversed.index('0')-len(results[modelNumber])+1)
                             logger.info(f"Array of {results[modelNumber][0]} has been found too long.")
                         else:
                             logger.info("Something unexpected happenend. Moving on.")
