@@ -16,13 +16,6 @@ while True:
             driver.get(SITE_ADDRESS)
             #Jakoś trzeba ominąć ostrzeżenie, że strona porno jest stroną porno.
             driver.find_element_by_link_text("Wchodzę").click()
-            #Przeładowanie kodu strony, bo inaczej mamy kod tylko dla ostrzeżenia.
-            #driver.refresh()
-
-            #Wyszukiwanie ogólnej liczby widzów i transmisji (Kobiety i mężczyźni chyba razem)
-            #Poprzez "in", bo z jakiegoś powodu zwykłe porównanie nie działa. Może różnice w kodowaniu stringów?
-            #Kek. Nie. Splitowało inaczej jak myślałem. In zostaje. A kurwa nie zostaje, bo json leci do kosza. Jebana bulwa
-
             while True:
                 driver.get(SITE_ADDRESS)
                 driver.refresh()
@@ -70,7 +63,7 @@ while True:
             logger.info("Continue Y/N")
             answer = input("> ")
             if answer == "Y":
-                pass
+                continue
             else:
                 quit()
             driver.close()
