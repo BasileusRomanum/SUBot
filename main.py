@@ -2,9 +2,7 @@ import time
 import re
 import os
 import logging
-import mysql.connector
 from selenium import webdriver
-from bs4 import BeautifulSoup
 
 SITE_ADDRESS = 'https://showup.tv'
 
@@ -40,8 +38,18 @@ while True:
                 #Ale to już powinno być w JS, a nie pajtonku. HA, TAKI CHUJ. I TAK JEST W PYTHONIE
                 #Otwieramy .csv z nazwamia modelek i liczbą widzów. Potem dodajemy czas, kiedy pobrano wsio
                 #Docelowo przepiszę kod na korzystanie z jakieś .db
-                with open('dane.csv', 'r') as fileStart:
-                    results = [x.split(";") for x in fileStart.read().splitlines()]
+                try:
+                    with open('dane.csv', 'r') as fileStart:
+                        results = [x.split(";") for x in fileStart.read().splitlines()]
+                except:
+                    with open('dane.csv', 'w') as fileStart:
+                        results = []
+
+                        results.append(['Date'])
+                        results.append(['Transmisji'])
+                        results.append(['Ogladajacych'])
+                        results.append(['averageViewersNumber'])
+
                 results[0].append(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
                 #Wyciągamy liczbę widzów
@@ -94,7 +102,7 @@ while True:
                         #kontrola czy dany subarray ma odpowiednią długość po powyższym. Jeśli nie, to pozbywamy się najnowszego zera.
                         #Powinno pomóc na z dupy za długiego ostatniego subarraya.
                         print(len(results[modelNumber]), len(results[0]))
-                        if len(results[modelNumber]) == 0:
+                        if len(results[modelNumber]) == 1:
                             results[modelNumber].pop()
                             logging.info("Found empty subarray")
                         elif len(results[modelNumber]) > len(results[0]):
