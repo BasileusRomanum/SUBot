@@ -28,7 +28,7 @@ modelsShowup.insert(0, 'index', range(len(modelsShowup)))
 modelsShowup.set_index('index', inplace=True)
 
 
-def ModelsPlot(modelName='Oglądających'):
+def ModelsPlot(modelName='Ogladajacych'):
     return px.line(modelsShowup[modelName],
                     title=" ".join(modelName),
                     x=modelsShowup['Date'],
@@ -41,7 +41,7 @@ app.layout = html.Div(children=[
     dcc.Dropdown(
         id="Nick modelki",
         options=[{'label':x, 'value':x} for x in list(modelsShowup.transpose().index)[1:]],
-        value=['Oglądających'],
+        value=['Ogladajacych'],
         multi=True
     ),
     html.Div(id="dd-output-container"),
@@ -81,10 +81,12 @@ def update_graph(value):
     modelsShowup.insert(0, 'Date', modelsShowup.index)
     modelsShowup.insert(0, 'index', range(len(modelsShowup)))
     modelsShowup.set_index('index', inplace=True)
-    return px.line({x : {modelsShowup['Date'][y] : modelsShowup[x][y] for y in range(len(modelsShowup))} for x in value},
-                    title=" ".join(value)
-                    )
-
+    if len(value) > 0:
+        return px.line({x : {modelsShowup['Date'][y] : int(modelsShowup[x][y]) for y in range(len(modelsShowup))} for x in value},
+                        title=" ".join(value)
+                        )
+    else:
+        return px.line({'Ogladajacych' : {modelsShowup['Date'][y] : int(modelsShowup['Ogladajacych'][y]) for y in range(len(modelsShowup))}})
 
 
 
