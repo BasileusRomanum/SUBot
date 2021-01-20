@@ -17,31 +17,27 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 # assume you have a "long-form" data frame
 # see https://plotly.com/python/px-arguments/ for more options
 
-modelsShowup = pd.read_csv(r"C:\VirtualPython\SUBot\dane.csv", sep=";", index_col=0)
+modelsShowup = pd.read_json(r".\dane.json")
+modelsShowup.fillna(0, inplace=True)
+modelsShowup.sort_index(inplace=True,)
 modelsList = list(modelsShowup.index)[2:]
-modelsShowup = modelsShowup.transpose()
 #Po odczycie dataframe z pliku tworzymy nowy index. Klasyczny. 0,1,2...
 #Ale najpierw klonujemy aktualny index, tworzymy potem nową kolumnę 0,1,2 itp i
 # to ją robimy indexem. :)
-modelsShowup.insert(0, 'Date', modelsShowup.index)
-modelsShowup.insert(0, 'index', range(len(modelsShowup)))
-modelsShowup.set_index('index', inplace=True)
-
-
 def ModelsPlot(modelName='Ogladajacych'):
     return px.line(modelsShowup[modelName],
                     title=" ".join(modelName),
-                    x=modelsShowup['Date'],
+                    x=modelsShowup.index,
                     y=modelsShowup[modelName]
                     )
 
 app.layout = html.Div(children=[
-    html.H1(children='Hella hehe'),
+    html.H1(children='***** ***'),
 
     dcc.Dropdown(
         id="Nick modelki",
-        options=[{'label':x, 'value':x} for x in list(modelsShowup.transpose().index)[1:]],
-        value=['Ogladajacych'],
+        options=[{'label':x, 'value':x} for x in list(modelsShowup.index)[1:]],
+        value=['hellahella'],
         multi=True
     ),
     html.Div(id="dd-output-container"),
@@ -60,8 +56,8 @@ def update_output(value):
         tmpSeriesModel = modelsShowup[modelka].copy()
         suma, enum = 0, 0
         for x in range(len(tmpSeriesModel)):
-            suma = int(tmpSeriesModel[x]) + suma
-            enum = enum + (1 if int(tmpSeriesModel[x]) != 0 else 0)
+            suma = suma + int(tmpSeriesModel[x])
+            enum = enum + (1 if int(tmpSeriesModel[x]) != int(0) else 0)
         return round(suma/enum)
     result = ", ".join([f'{x} średnia: {average(x)}' for x in value])
     return f'Wybrano {result}'
@@ -70,23 +66,24 @@ def update_output(value):
     dash.dependencies.Output('Nick modelki', 'options'),
     [dash.dependencies.Input('Nick modelki', 'value')])
 def update_dropdown(value='Liczba_widzow_ogolem'):
-    modelsShowup = pd.read_csv(r"C:\VirtualPython\SUBot\dane.csv", sep=";", index_col=0).transpose()
+    modelsShowup = pd.read_json(r".\dane.json")
+    modelsShowup.fillna(0, inplace=True)
+    modelsShowup.sort_index(inplace=True,)
     return [{'label':x, 'value':x} for x in list(modelsShowup.transpose().index)[1:]]
 
 @app.callback(
     dash.dependencies.Output('basic-graph', 'figure'),
     [dash.dependencies.Input('Nick modelki', 'value')])
 def update_graph(value):
-    modelsShowup = pd.read_csv(r"C:\VirtualPython\SUBot\dane.csv", sep=";", index_col=0).transpose()
-    modelsShowup.insert(0, 'Date', modelsShowup.index)
-    modelsShowup.insert(0, 'index', range(len(modelsShowup)))
-    modelsShowup.set_index('index', inplace=True)
+    modelsShowup = pd.read_json(r".\dane.json")
+    modelsShowup.fillna(0, inplace=True)
+    modelsShowup.sort_index(inplace=True,)
     if len(value) > 0:
-        return px.line({x : {modelsShowup['Date'][y] : int(modelsShowup[x][y]) for y in range(len(modelsShowup))} for x in value},
+        return px.line({x : modelsShowup[x].fillna(0) for x in value},
                         title=" ".join(value)
                         )
     else:
-        return px.line({'Ogladajacych' : {modelsShowup['Date'][y] : int(modelsShowup['Ogladajacych'][y]) for y in range(len(modelsShowup))}})
+        return px.line(modelsShowup['Ogladajacych'])
 
 
 
